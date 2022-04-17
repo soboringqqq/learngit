@@ -1,0 +1,21 @@
+# current_number = 1
+# while current_number <= 5:
+	# print(current_number)
+	# current_number += 1
+# print("\n")
+
+# prompt = "\nTell me something, and I will repeat it back to you: "
+# prompt += "\nEnter 'quit' to end the program. "
+# message = ""
+# while message != 'quit':
+	# message = input(prompt)
+	# if message != 'quit':
+		# print(message)
+
+current_number = 0
+while current_number < 10:
+	current_number += 1
+	if current_number % 2 == 0:
+		continue # continue restart the while loop
+		
+	print(current_number) 
