@@ -1,0 +1,18 @@
+Altium Designer Pick and Place Locations
+C:\Users\wangc\Desktop\test\Project Outputs for led\Pick Place\Pick Place for LED.txt
+
+========================================================================================================================
+File Design Information:
+
+Date:       12/03/22
+Time:       18:10
+Revision:   Not in VersionControl
+Variant:    No variations
+Units used: mil
+
+Designator Comment      Layer       Footprint Center-X(mil) Center-Y(mil) Rotation Description                                                                      
+R2         360R         BottomLayer R0805     708.661       531.496       90       "Res Thick Film 0805 360 Ohm 1% 1/8W б└100ppm/буC Molded SMD SMD Paper T/R"        
+D2         Green        BottomLayer LED0603G  708.661       229.331       90       "Super Ultra Green 1.6 x 0.8 mm 120бу Water Clear 50 mcd 2.2 V Surface Mount LED" 
+R1         360R         TopLayer    R0805     177.165       492.126       90       "Res Thick Film 0805 360 Ohm 1% 1/8W б└100ppm/буC Molded SMD SMD Paper T/R"        
+J1         "1x2 Header" TopLayer    HEADER1X2 590.551       442.126       0        "CONN HEADER 2POS .100 VERT TIN"                                                 
+D1         Green        TopLayer    LED0603G  177.165       177.165       90       "Super Ultra Green 1.6 x 0.8 mm 120бу Water Clear 50 mcd 2.2 V Surface Mount LED" 
