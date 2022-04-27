@@ -67,7 +67,7 @@ cap = cv.imread('blue_cap.jpg')
 
 
 hsv = cv.cvtColor(cap, cv.COLOR_BGR2HSV)
-# define range of blue color in HSV
+# define range of blue color in HSV HSV converted table 
 lower_red = np.array([78,43,46])
 upper_red = np.array([99,255,255]) # upper must greater than lower 
 # Threshold the HSV image to get only blue colors
