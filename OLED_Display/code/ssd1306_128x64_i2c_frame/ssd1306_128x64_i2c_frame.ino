@@ -35,10 +35,11 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32 mine 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define NUMFLAKES     10 // Number of snowflakes in the animation example
+#define frames     1 // Number of frame in the animation example
 
 #define LOGO_WIDTH    64
 #define LOGO_HEIGHT   64
+int frame = 0;
 static const unsigned char PROGMEM logo_bmp[] =
 {
 0x00, 0x07, 0xfe, 0x00, 0x00, 0x00, 0x01, 0xe0, 
@@ -178,7 +179,7 @@ static const unsigned char PROGMEM logo_bmp1[] =
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -190,20 +191,64 @@ void setup() {
 
 
 
-void testdrawbitmap(void) {
-  display.clearDisplay();
+void loop()
+{
+  //testdrawbitmap();
+  stream();
+  frame = 0;
+}
 
+
+void testdrawbitmap(void) {
+  
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-//  display.clearDisplay();
   display.display();
   delay(200);
   display.clearDisplay();
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp1, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
   delay(200);
+  display.clearDisplay();
 }
 
-void loop()
+
+void stream(void)
 {
-  testdrawbitmap();
+  for(frame; frame <= frames; frame++)  
+  {
+    framebyframe(frame);
+    
+//    Serial.println(1);
+  }
+  
+}
+
+void framebyframe(int frame)
+{
+  switch(frame)
+  {
+    case 0:
+      f0();
+      break;
+    case 1:
+      f1();
+      break;
+  }
+  
+}
+
+
+void f0(void)
+{
+  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.display();
+  delay(200);
+  display.clearDisplay();
+}
+void f1(void)
+{
+  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp1, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.display();
+  delay(200);
+  display.clearDisplay();
 }
