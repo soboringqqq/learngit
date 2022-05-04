@@ -1,0 +1,3 @@
+1. Using Microsoft Drawing tool resizes the image and export the image to BMP file.
+2. Using LCD assistant or LCD image converter to converts the image to array.
+3. Load the array into the Arduino code. 
