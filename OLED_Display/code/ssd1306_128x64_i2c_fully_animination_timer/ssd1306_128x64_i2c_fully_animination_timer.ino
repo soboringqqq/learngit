@@ -40,7 +40,27 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define LOGO_WIDTH    64
 #define LOGO_HEIGHT   64
 int frame = 0;
-#define delay_time  30
+#define delay_time  50000 // 50 ms
+
+hw_timer_t * timer = NULL;
+volatile SemaphoreHandle_t timerSemaphore;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+
+volatile uint32_t isrCounter = 0;
+volatile uint32_t lastIsrAt = 0;
+
+void ARDUINO_ISR_ATTR onTimer() 
+{
+  // Increment the counter and set the time of ISR
+  portENTER_CRITICAL_ISR(&timerMux);
+  isrCounter++;
+  lastIsrAt = millis();
+  portEXIT_CRITICAL_ISR(&timerMux);
+  // Give a semaphore that we can check in the loop
+  xSemaphoreGiveFromISR(timerSemaphore, NULL);
+  // It is safe to use digitalRead/Write here if you want to toggle an output
+}
+
 
 
 
@@ -53,6 +73,24 @@ void setup() {
     for (;;); // Don't proceed, loop forever
   }
 
+  // Create semaphore to inform us when the timer has fired
+  timerSemaphore = xSemaphoreCreateBinary();
+
+  // Use 1st timer of 4 (counted from zero).
+  // Set 80 divider for prescaler (see ESP32 Technical Reference Manual for more
+  // info).
+  timer = timerBegin(0, 80, true);
+
+  // Attach onTimer function to our timer.
+  timerAttachInterrupt(timer, &onTimer, true);
+
+  // Set alarm to call onTimer function every second (value in microseconds).
+  // Repeat the alarm (third parameter)
+  timerAlarmWrite(timer, delay_time, true); // 1000000 = 1 second
+
+  // Start an alarm
+  timerAlarmEnable(timer);
+
 }
 
 
@@ -61,45 +99,37 @@ void loop()
 {
 
   display.clearDisplay();
-  stream();
-  frame = 0;
+ // stream();
+//  frame = 0;
 
-}
-
-
-void testdrawbitmap(void) {
-  //  display.clearDisplay();
-  //  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
-  //  display.display();
-  //  delay(200);
-  //  display.clearDisplay();
-  //  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp1, LOGO_WIDTH, LOGO_HEIGHT, 1);
-  //  display.display();
-  //  delay(200);
-  //  display.clearDisplay();
-  //  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp2, LOGO_WIDTH, LOGO_HEIGHT, 1);
-  //  display.display();
-  //  delay(200);
-  //  display.clearDisplay();
-}
-
-
-void stream(void)
-{
-  for (frame; frame <= frames; frame++)
+  if (xSemaphoreTake(timerSemaphore, 0) == pdTRUE) 
   {
-    framebyframe(frame);
+    uint32_t isrCount = 0, isrTime = 0;
+    // Read the interrupt count and time
+    portENTER_CRITICAL(&timerMux);
+    isrCount = isrCounter;
+    isrTime = lastIsrAt;
+    portEXIT_CRITICAL(&timerMux);
+    // Print it
+    Serial.print("onTimer no. ");
+    Serial.print(isrCount);
+    Serial.print(" at ");
+    Serial.print(isrTime);
+    Serial.println(" ms");
 
-    //    Serial.println(1);
+    framebyframe(frame); // every 50ms refresh a frame
+    frame++;
+
+    if (frame == frames)
+    {
+      frame = 0;
+    }
+
   }
-  //
-  //  for (frame; frame >= 0; frame--)
-  //  {
-  //    framebyframe(frame);
-  //    Serial.println('1');
-  //  }
 
 }
+
+
 
 void framebyframe(int frame)
 {
@@ -291,440 +321,334 @@ void framebyframe(int frame)
 
 void f0(void)
 {
-  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1);
+  display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp, LOGO_WIDTH, LOGO_HEIGHT, 1); // display.drawBitmap(width position, height position, picture, picture width, picture height, none use)
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
+
 }
 void f1(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp1, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
+
 }
 void f2(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp2, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
+
 }
 
 void f3(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp3, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
+
 }
 
 void f4(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp4, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f5(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp5, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f6(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp6, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f7(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp7, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f8(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp8, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f9(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp9, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f10(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp10, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f11(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp11, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f12(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp12, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f13(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp13, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f14(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp14, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f15(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp15, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f16(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp16, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f17(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp17, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f18(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp18, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f19(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp19, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f20(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp20, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f21(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp21, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f22(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp22, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f23(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp23, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f24(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp24, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f25(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp25, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f26(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp26, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f27(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp27, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f28(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp28, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f29(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp29, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f30(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp30, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f31(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp31, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f32(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp33, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f33(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp33, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f34(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp34, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f35(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp35, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f36(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp36, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f37(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp37, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f38(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp38, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f39(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp39, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f40(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp40, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f41(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp41, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f42(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp42, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f43(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp43, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f44(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp44, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f45(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp45, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f46(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp46, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f47(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp47, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f48(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp48, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f49(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp49, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f50(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp50, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f51(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp51, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f52(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp52, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f53(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp53, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f54(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp54, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 
@@ -732,16 +656,12 @@ void f55(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp55, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f56(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp56, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 
@@ -749,14 +669,10 @@ void f57(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp57, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
 
 void f58(void)
 {
   display.drawBitmap((display.width() - LOGO_WIDTH) / 2, 0, logo_bmp58, LOGO_WIDTH, LOGO_HEIGHT, 1);
   display.display();
-  delay(delay_time);
-  display.clearDisplay();
 }
