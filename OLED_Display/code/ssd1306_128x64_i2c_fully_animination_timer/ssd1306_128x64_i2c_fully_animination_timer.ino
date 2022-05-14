@@ -98,7 +98,7 @@ void setup() {
 void loop()
 {
 
-  display.clearDisplay();
+//  display.clearDisplay();
  // stream();
 //  frame = 0;
 
@@ -116,7 +116,8 @@ void loop()
     Serial.print(" at ");
     Serial.print(isrTime);
     Serial.println(" ms");
-
+    
+    display.clearDisplay();
     framebyframe(frame); // every 50ms refresh a frame
     frame++;
 
