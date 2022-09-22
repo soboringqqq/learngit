@@ -16,7 +16,10 @@ for column in columns:
 		
 	if column == 'geeks.com':
 		print ('P')
+		print('\nCurrent Value is = ', column)
 	else:
 		print ('F')
 		
-	
+
+
+ws.range("B2").value = ["asd"] # Write value into a single cell
