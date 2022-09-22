@@ -23,3 +23,6 @@ for column in columns:
 
 
 ws.range("B2").value = ["asd"] # Write value into a single cell
+
+columns = ws.range("A:A").value
+print("\nA value in sheet1 :", columns)
