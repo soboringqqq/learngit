@@ -1,4 +1,5 @@
 import xlwings as xw
+# import excel_select
 
 global E_Contents
 E_Contents = [] # dic for Electrical Standard
