@@ -1,7 +1,9 @@
 import xlwings as xw
-# import excel_select
+import excel_search_sub
+import excel_select
 
-def excel_search(E_sheet,A_sheet):
+
+def excel_search(E_sheet, A_sheet):
 	"""Return Result"""
 	global E_Contents
 	E_Contents = [] # dic for Electrical Standard
@@ -9,83 +11,47 @@ def excel_search(E_sheet,A_sheet):
 	Column_temp = [] # temp store found Electrical Standard
 	E_Found = [] # Found Electrical Standard
 	E_NotFound = [] # Not Found Electrical Standard
+	E_NotFoundC = []
 	
-	ES = xw.Book('Electrical_Standard_2022_10.xls').sheets[int(E_sheet)]
-	ALL = xw.Book('ALL_STANDARD_2022_09.xlsx').sheets[int(A_sheet)]
-	
-	columns_ESS = ES.range("B4:B30").value
-	columns_ESS_Name = ES.range("C4:C30").value
-	columns_ALL = ALL.range("B1:B3000").value
-	
-	# print(columns_ESS_Name)
-	
-	# E_Contents = {'Code': 'qwe', 'Name': 'asd'} 
-	# print(E_Contents['Code'])
-	
-	# print(len(columns_ESS_Name))
-	
-	for E_Content_number in range(len(columns_ESS_Name)): # Create empty dic
-		new_E_Content = {'Code': 'place', 'Name': 'place'} # two element
-		E_Contents.append(new_E_Content)
-	
-	# for E in E_Contents[:5]:
-		# print(E)
-	# print(len(E_Contents))
+	columns_ESS, columns_ESS_Name = excel_select.excel_select_E(E_sheet)
+	columns_ALL = excel_select.excel_select_A(A_sheet)
 	
 	
-	for columns_ES in columns_ESS:
-		columns_ES_buffer = columns_ES
+	
+	
+	Column_temp, E_Content_flag, E_Contents = excel_search_sub.excel_search_s(columns_ESS, columns_ESS_Name, columns_ALL)
+	
+	
+	
+	E_Found, E_NotFound = excel_search_sub.excel_print(Column_temp, E_Content_flag, E_Contents)
+	
+	
+	# if Flag == True:
+		# for i in range(len(E_NotFound)):
+			# E_NotFoundC = excel_search_sub.excel_search_ss(E_NotFound[i]['Code'], columns_ALL)
+			# print(E_NotFound[i]['Code'])
 		
-		try:
-			columns_ES_buffer = ''.join(columns_ES_buffer.split())
-			# print(columns_ES_buffer)
-			E_Contents[E_Content_flag]['Code'] = columns_ES_buffer # add Code 
-			E_Contents[E_Content_flag]['Name'] = columns_ESS_Name[E_Content_flag] # add Name
-			E_Content_flag = E_Content_flag + 1
-		except AttributeError: # This is only for preventing program to crash
-			"1" # nothing happned
-			
-		for column in columns_ALL:
-			column_buffer = column
-			try:
-				column_buffer = ''.join(column_buffer.split())
-			except AttributeError:
-				"1" # nothing happned
-			if column_buffer == None:
-				"1"
-			elif column_buffer == columns_ES_buffer:
-				# print ('P')
-				# print(columns_ES_buffer)
-				Column_temp.append(columns_ES_buffer)
-			
-					
-			# elif column_buffer != columns_ES_buffer and column_buffer != None:
-				# Column_temp_Not.append(columns_ES_buffer)
-				# # print(Column_temp_Not)
-				
+		# print(123)
 	
-	
-	print("""==============================================================================""")
-	print("\n             Found Electrical Standard\n")
-	for i in range(E_Content_flag):
-		if E_Contents[i]['Code'] in Column_temp:
-			# print(E_Contents[i])
-			E_Found.append(E_Contents[i])
-		else:
-			# print(E_Contents[i])
-			E_NotFound.append(E_Contents[i])
-	
-	# print("\n", Column_temp_Not)
-	
-	
-	for i in range(len(E_Found)):
-		print(E_Found[i])
-	
-	print("""==============================================================================""")
-	print("\n            Not Found Electrical Standard\n")
-	
-	for i in range(len(E_NotFound)):
-		print(E_NotFound[i])
-
-
 # excel_search
+	return E_NotFound
+	
+def excel_search_NotF(E_NotFound, columns_ALL):
+	"""Search Not Found"""
+	E_Found = []
+	for column in columns_ALL:
+		column_buffer= column
+		try:
+			column_buffer = ''.join(column_buffer.split())
+		except AttributeError:
+			"1" # nothing happned
+		# if column_buffer == None:
+			# "1"
+		# elif column_buffer == columns_ES_buffer:
+				
+			# Column_temp.append(columns_ES_buffer)
+		for i in range(len(E_NotFound)):
+			if E_NotFound[i]['Code'] == column_buffer:
+				E_Found.append(column_buffer)
+	print(E_Found)
+			
